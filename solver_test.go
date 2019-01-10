@@ -1,7 +1,6 @@
 package equation
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -16,8 +15,6 @@ func validEquation(t *testing.T) {
 	e2 := &Equation{2, 1, 9}
 	solver := *NewSolver()
 	sol, _ := solver.Solve([]Equation{*e1, *e2})
-
-	fmt.Printf("Solution: x = %f, y = %f\n", sol.FirstUnknown, sol.SecondUnknown)
 
 	if sol.FirstUnknown != 3.5 || sol.SecondUnknown != 2 {
 		t.Fail()

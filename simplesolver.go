@@ -8,7 +8,6 @@ type SimpleSolver struct{}
 func (s SimpleSolver) Solve(equation []Equation) (Solution, error) {
 
 	if len(equation) != 2 {
-		// error
 		return Solution{0, 0}, errors.New("two equations are required")
 	}
 
@@ -18,7 +17,6 @@ func (s SimpleSolver) Solve(equation []Equation) (Solution, error) {
 	denomirator := (e1.FirstCoefiicient*e2.SecondCoefiicient - e1.SecondCoefiicient*e2.FirstCoefiicient)
 
 	if denomirator == 0 {
-		// error
 		return Solution{0, 0}, errors.New("the equation system doesn't have a determinstic output")
 	}
 
