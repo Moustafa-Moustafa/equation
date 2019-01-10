@@ -18,6 +18,9 @@ func TestParse(t *testing.T) {
 	t.Run("x+y=", func(t *testing.T) { checkInvaidEquationParsing(t, "x+y=") })
 	t.Run("x-=+", func(t *testing.T) { checkInvaidEquationParsing(t, "x-=+") })
 	t.Run("x+.=8", func(t *testing.T) { checkInvaidEquationParsing(t, "x+.=8") })
+	t.Run("x=y+", func(t *testing.T) { checkInvaidEquationParsing(t, "x=y+") })
+	t.Run("+x=0", func(t *testing.T) { checkInvaidEquationParsing(t, "+x=0") })
+	t.Run("+-y=0", func(t *testing.T) { checkInvaidEquationParsing(t, "+-y=0") })
 }
 
 func validateEquationParsing(t *testing.T, equationString string, firstCoef float64, secondCoef float64, equationConst float64) {

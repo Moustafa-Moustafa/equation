@@ -2,10 +2,10 @@ package equation
 
 import "errors"
 
-type SimpleSolver struct{}
+type simpleSolver struct{}
 
 // Solve the specified equation and sets the coifficients and the constant
-func (s SimpleSolver) Solve(equation []Equation) (Solution, error) {
+func (s simpleSolver) Solve(equation []Equation) (Solution, error) {
 
 	if len(equation) != 2 {
 		return Solution{0, 0}, errors.New("two equations are required")

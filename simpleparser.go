@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-type SimpleParser struct{}
+type simpleParser struct{}
 
 // Parse the specified equation and sets the coifficients and the constant
-func (p SimpleParser) Parse(equationString string) (Equation, error) {
+func (p simpleParser) Parse(equationString string) (Equation, error) {
 
 	equationString = strings.ToLower(strings.Join(strings.Fields(equationString), ""))
 	equationSides := strings.Split(equationString, "=")
@@ -36,8 +36,9 @@ func (p SimpleParser) Parse(equationString string) (Equation, error) {
 	return simpleEquation, nil
 }
 
+// Parse the specified expression
 func parseExpression(expression string) (Equation, error) {
-	if expression == "" {
+	if expression == "" || strings.Index(expression, "+") == 0 {
 		return Equation{0, 0, 0}, fmt.Errorf("invalid expression %s", expression)
 	}
 
@@ -46,50 +47,74 @@ func parseExpression(expression string) (Equation, error) {
 		return Equation{0, 0, 0}, err
 	}
 
-	equationConst := 0.0
-	if matches[9] != "" {
-		equationConst, err = strconv.ParseFloat(matches[9], 64)
-		if err != nil {
-			return Equation{0, 0, 0}, err
-		}
-
+	// Calculates the equation constant
+	equationConst, err := calculateConstant(matches)
+	if err != nil {
+		return Equation{0, 0, 0}, err
 	}
 
+	// Calculates the equation first coefficient
 	firstCoef, err := calculateCoefficient(matches, 0)
 	if err != nil {
 		return Equation{0, 0, 0}, err
 	}
 
-	secondCoef, err := calculateCoefficient(matches, 4)
+	// Calculates the equation second coefficient
+	secondCoef, err := calculateCoefficient(matches, 3)
 	if err != nil {
 		return Equation{0, 0, 0}, err
 	}
+
 	eq := &Equation{firstCoef, secondCoef, equationConst}
 
 	return *eq, nil
 }
 
+// Simplifies the equasion by moving the unknowns to LHS and the constants to RHS
 func getEquationFromExpressions(lhsExpression Equation, rhsExpression Equation) Equation {
 	return Equation{lhsExpression.FirstCoefiicient - rhsExpression.FirstCoefiicient,
 		lhsExpression.SecondCoefiicient - rhsExpression.SecondCoefiicient,
 		rhsExpression.EquationConstant - lhsExpression.EquationConstant}
 }
 
-func calculateCoefficient(matches []string, startIndex int) (float64, error) {
-	xc := matches[startIndex+2]
-	if matches[startIndex+1] != "" {
-		if matches[startIndex+3] != "" {
-			xc += matches[startIndex+3]
+// Calculates the equation constant based on the submatches
+func calculateConstant(matches []string) (float64, error) {
+	equationConstant := "0.0"
+	if matches[7] != "" {
+		if matches[8] == "+" || matches[8] == "+-" {
+			equationConstant = matches[7][1:]
 		} else {
-			xc += "1"
+			equationConstant = matches[7]
 		}
-	} else {
-		xc += "0"
 	}
 
-	return strconv.ParseFloat(xc, 64)
+	return strconv.ParseFloat(equationConstant, 64)
 }
 
+// Calculates the equation coefficient based on the submatches
+func calculateCoefficient(matches []string, startIndex int) (float64, error) {
+	coefficient := ""
+
+	if matches[startIndex+1] == "" {
+		coefficient += "0"
+	} else {
+		// simplify it for the parsing
+		if matches[startIndex+2] == "+-" || matches[startIndex+2] == "-" {
+			coefficient = "-"
+		}
+
+		if matches[startIndex+3] != "" {
+			coefficient += matches[startIndex+3]
+		} else {
+			// in case of unknown with no coeeficient (e.g "x")
+			coefficient += "1"
+		}
+	}
+
+	return strconv.ParseFloat(coefficient, 64)
+}
+
+// Finds the submatches used for equation construction
 func findRegexMatches(equationString string) ([]string, error) {
 	regexMatcher, err := regexp.Compile(buildRegexPattern())
 
@@ -103,20 +128,17 @@ func findRegexMatches(equationString string) ([]string, error) {
 		return nil, fmt.Errorf("can't parse equation %s", equationString)
 	}
 
-	// Check the operands exist
-	if (matches[1] != "" && matches[5] != "" && matches[4] == "" && matches[6] == "") ||
-		(matches[1] != "" && matches[9] != "" && matches[4] == "" && matches[10] == "") ||
-		(matches[5] != "" && matches[9] != "" && matches[8] == "" && matches[10] == "") {
-		return nil, fmt.Errorf("can't parse equation %s", equationString)
-	}
-
 	return matches, nil
 }
 
 func buildRegexPattern() string {
-	return `^` + buildCoefficientMatchRegexPattern("x") + `(\+)?` + buildCoefficientMatchRegexPattern("y") + `(\+)?` + `((-)?(\d*\.?\d*))?` + `$`
+	return `^` + buildCoefficientMatchRegexPattern("x") + buildCoefficientMatchRegexPattern("y") + `(` + buildNumberPattern() + `)?` + `$`
 }
 
 func buildCoefficientMatchRegexPattern(unknown string) string {
-	return `((-)?(\d*\.?\d*)?` + unknown + `)?`
+	return `(` + buildNumberPattern() + unknown + `)?`
+}
+
+func buildNumberPattern() string {
+	return `(\+|\+-|-)?(\d*\.?\d*)?`
 }
