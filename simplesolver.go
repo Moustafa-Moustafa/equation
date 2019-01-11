@@ -1,6 +1,9 @@
 package equation
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 type simpleSolver struct{}
 
@@ -14,15 +17,28 @@ func (s simpleSolver) Solve(equation []Equation) (Solution, error) {
 	e1 := equation[0]
 	e2 := equation[1]
 
-	denomirator := (e1.FirstCoefiicient*e2.SecondCoefiicient - e1.SecondCoefiicient*e2.FirstCoefiicient)
-
-	if denomirator == 0 {
+	if almostEqual(e1.FirstCoefiicient*e2.SecondCoefiicient, e1.SecondCoefiicient*e2.FirstCoefiicient) {
 		return Solution{0, 0}, errors.New("the equation system doesn't have a determinstic output")
 	}
 
+	denomirator := (e1.FirstCoefiicient*e2.SecondCoefiicient - e1.SecondCoefiicient*e2.FirstCoefiicient)
 	x := (e1.EquationConstant*e2.SecondCoefiicient - e1.SecondCoefiicient*e2.EquationConstant) / denomirator
 	y := (e1.FirstCoefiicient*e2.EquationConstant - e1.EquationConstant*e2.FirstCoefiicient) / denomirator
 
 	var sol = &Solution{x, y}
 	return *sol, nil
+}
+
+func almostEqual(a float64, b float64) bool {
+	if a == b {
+		return true
+	}
+
+	absDiff := math.Abs(a - b)
+	epsilon := .000000001
+	if absDiff < epsilon {
+		return true
+	}
+
+	return false
 }
